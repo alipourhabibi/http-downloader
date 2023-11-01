@@ -1,0 +1,19 @@
+version: "3.4"
+
+services:
+
+  http-downloader:
+    container_name: http-downloader
+    build:
+      context: .
+    stdin_open: true
+    tty: true
+
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    volumes:
+      - /tmp/nginx:/usr/share/nginx/html:ro
+    ports:
+      - 80:80
+
