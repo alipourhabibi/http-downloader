@@ -90,7 +90,11 @@ func (s *server) DownloadParallel(resourse string, length int) error {
 	offset := 0
 	for offset = 0; offset < 10; offset++ {
 		wg.Add(1)
-		go save(s.fd, s.serverAddr, resourse, offset, size, size, &wg)
+		if offset == 9 {
+			go save(s.fd, s.serverAddr, resourse, offset, size, size+(length-(size*10)), &wg)
+		} else {
+			go save(s.fd, s.serverAddr, resourse, offset, size, size, &wg)
+		}
 	}
 	// wg.Add(1)
 	// save(s.fd, s.serverAddr, resourse, offset, size, length-(size*10)+size, &wg)
@@ -211,29 +215,34 @@ func save(serverFD int, serverAddr *syscall.SockaddrInet4, file string, offset, 
 	}
 	index := 0
 	if strings.Contains(string(response), "\r\n\r\n") {
-		header := []byte(strings.Split(string(response), "\r\n\r\n")[0])
-		response = []byte(strings.Split(string(response), "\r\n\r\n")[1])
-		response = response[:n-len(header)]
-		response = response[:len(response)-4]
-		if len(response) != 0 {
-			w.Save(response[:n-len(header)-4], int64(b))
-			index += n - len(header) - 4
-			b += index
+		splitedResp := strings.Split(string(response), "\r\n\r\n")
+		if len(splitedResp) >= 2 {
+			header := []byte(splitedResp[0])
+			response = []byte(strings.Join(splitedResp[1:], "\r\n\r\n"))
+			response = response[:n-len(header)]
+			response = response[:len(response)-4]
+			if len(response) != 0 {
+				w.Save(response, int64(b))
+				index += len(response)
+				b += index
+			}
+		} else {
+			wg.Done()
+			return
 		}
 	}
 
 	for {
-		response = make([]byte, 8000)
-		if index > msgSize {
+		if index >= msgSize {
 			break
 		}
+		response = make([]byte, 8000)
 		n, _, err := syscall.Recvfrom(serverFD, response, syscall.MSG_WAITFORONE)
 		if err != nil {
 			fmt.Println("Recvfrom: ", err)
 			syscall.Close(serverFD)
 			return
 		}
-
 		w.Lock()
 		w.Save(response[:n], int64(b))
 		w.Unlock()
