@@ -2,7 +2,7 @@ package http
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -22,11 +22,12 @@ type server struct {
 func NewServer(host string, port int, maxSize int64) (*server, error) {
 	serverFD, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_STREAM, syscall.IPPROTO_IP)
 	if err != nil {
-		log.Fatal("Socket: ", err)
+		slog.Error("Socker: ", "error", err.Error())
+		os.Exit(1)
 	}
 
 	if err != nil || (port < 0 || port > 65535) {
-		os.Stderr.WriteString("Invalid port format\n")
+		slog.Error("Invalid port", "port", port)
 		return nil, err
 	}
 	serverAddr := &syscall.SockaddrInet4{
@@ -37,7 +38,7 @@ func NewServer(host string, port int, maxSize int64) (*server, error) {
 	err = syscall.Connect(serverFD, serverAddr)
 	if err != nil {
 		if err == syscall.ECONNREFUSED {
-			os.Stderr.WriteString("* Connection failed")
+			slog.Error("* connection falied")
 			syscall.Close(serverFD)
 			return nil, err
 		}
@@ -188,7 +189,7 @@ func save(serverFD int, serverAddr *syscall.SockaddrInet4, file string, offset, 
 	err = syscall.Connect(serverFD, serverAddr)
 	if err != nil {
 		if err == syscall.ECONNREFUSED {
-			fmt.Println("* Connection failed")
+			slog.Error("* Connection failed")
 			syscall.Close(serverFD)
 			return
 		}
@@ -204,12 +205,13 @@ func save(serverFD int, serverAddr *syscall.SockaddrInet4, file string, offset, 
 		[]byte(msg),
 		nil, serverAddr, syscall.MSG_WAITFORONE)
 	if err != nil {
-		fmt.Println("Sendmsg: ", err)
+		slog.Error("Sendmsg: ", "error", err.Error())
+		return
 	}
 	response := make([]byte, 8000)
 	n, _, err := syscall.Recvfrom(serverFD, response, syscall.MSG_WAITFORONE)
 	if err != nil {
-		fmt.Println("Recvfrom: ", err)
+		slog.Error("Recvfrom: ", "error", err.Error())
 		syscall.Close(serverFD)
 		return
 	}
@@ -239,7 +241,7 @@ func save(serverFD int, serverAddr *syscall.SockaddrInet4, file string, offset, 
 		response = make([]byte, 8000)
 		n, _, err := syscall.Recvfrom(serverFD, response, syscall.MSG_WAITFORONE)
 		if err != nil {
-			fmt.Println("Recvfrom: ", err)
+			slog.Error("Recvfrom: ", "error", err.Error())
 			syscall.Close(serverFD)
 			return
 		}

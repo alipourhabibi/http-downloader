@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -10,6 +11,8 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
+	slog.SetDefault(logger)
 	args := os.Args[1:]
 	if len(args) != 3 {
 		os.Stderr.WriteString("./client [IPv4] [Port] [FileName]")
