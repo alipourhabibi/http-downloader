@@ -72,6 +72,7 @@ func main() {
 		slog.Error("strconv error", "error", err.Error())
 		return
 	}
+	slog.Debug("Content-Length", "size", intSize)
 	server, err = http.NewServer(*ip, *port, 8000)
 	if intSize <= 1000 {
 		err = server.DownloadOne(*fileName, intSize)

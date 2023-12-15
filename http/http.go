@@ -82,6 +82,7 @@ func (s *server) RecieveMsg() (int, []byte, error) {
 }
 
 func (s *server) DownloadParallel(resourse string, length int) error {
+	slog.Info("DonwloadParallel", "resourse", resourse, "size", length)
 	err := writer.Create(resourse)
 	if err != nil {
 		return err
@@ -104,6 +105,7 @@ func (s *server) DownloadParallel(resourse string, length int) error {
 }
 
 func (s *server) DownloadOne(resourse string, size int) error {
+	slog.Info("DonwloadOne", "resourse", resourse, "size", size)
 	err := writer.Create(resourse)
 	if err != nil {
 		return err
@@ -185,6 +187,7 @@ func GetStatus(response []byte) int {
 }
 
 func save(serverFD int, serverAddr *syscall.SockaddrInet4, file string, offset, msgSize, size int, wg *sync.WaitGroup) {
+	slog.Info("Partial Download", "file", file, "offset", offset, "size", size)
 	serverFD, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_STREAM, syscall.IPPROTO_IP)
 	err = syscall.Connect(serverFD, serverAddr)
 	if err != nil {
@@ -200,6 +203,7 @@ func save(serverFD int, serverAddr *syscall.SockaddrInet4, file string, offset, 
 	defer w.Close()
 	var msg string
 	msg = fmt.Sprintf("GET /%s HTTP/1.1\r\nHOST: localhost\r\nConnection: keep-alive\r\nRange: bytes=%d-%d\r\n\r\n", file, b, b+size)
+	slog.Debug("request msg", "msg", msg)
 	err = syscall.Sendmsg(
 		serverFD,
 		[]byte(msg),
@@ -230,6 +234,7 @@ func save(serverFD int, serverAddr *syscall.SockaddrInet4, file string, offset, 
 			}
 		} else {
 			wg.Done()
+			slog.Info("save done", "offset", offset)
 			return
 		}
 	}
@@ -252,4 +257,5 @@ func save(serverFD int, serverAddr *syscall.SockaddrInet4, file string, offset, 
 		b += n
 	}
 	wg.Done()
+	slog.Info("save done", "offset", offset)
 }
