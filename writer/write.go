@@ -10,14 +10,14 @@ type file struct {
 	fd int
 }
 
-func NewFile(f string) *file {
+func NewFile(f string) (*file, error) {
 	fd, err := syscall.Open(f, syscall.O_RDWR, 0644)
 	if err != nil {
-		//TODO
+		return nil, err
 	}
 	return &file{
 		fd: fd,
-	}
+	}, nil
 }
 
 func Create(file string) error {

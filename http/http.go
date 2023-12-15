@@ -120,7 +120,10 @@ func (s *server) DownloadOne(resourse string, size int) error {
 		return err
 	}
 	index := 0
-	w := writer.NewFile(resourse)
+	w, err := writer.NewFile(resourse)
+	if err != nil {
+		return err
+	}
 	var header []byte
 	if strings.Contains(string(resp), "\r\n\r\n") {
 		header = []byte(strings.Split(string(resp), "\r\n\r\n")[0])
@@ -199,7 +202,11 @@ func save(serverFD int, serverAddr *syscall.SockaddrInet4, file string, offset, 
 	}
 
 	b := offset * msgSize
-	w := writer.NewFile(file)
+	w, err := writer.NewFile(file)
+	if err != nil {
+		slog.Error("NewFile save", "error", err)
+		return
+	}
 	defer w.Close()
 	var msg string
 	msg = fmt.Sprintf("GET /%s HTTP/1.1\r\nHOST: localhost\r\nConnection: keep-alive\r\nRange: bytes=%d-%d\r\n\r\n", file, b, b+size)
