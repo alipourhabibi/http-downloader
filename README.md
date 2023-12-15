@@ -6,5 +6,5 @@ you first need to put your files in /tmp/nginx
 ```sh
 $ docker compose up -d
 $ docker exec -it HTTPDL_CONTAINER sh
-# ./httpdl YOUR_HOST_IP 80 FILENAME
+# /bin/httpdl --port PORT --ip IP --filename FILENAME --source true
 ```
